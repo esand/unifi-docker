@@ -126,8 +126,7 @@ The [Current Information](#current-information) section below discusses the vers
 
 ## Current Information
 
-The current tested version of unifi-docker is listed in the table below.
-
+The current tested version of unifi-docker is listed in the table below. 
 You can choose the version of Unifi Controller in the `docker run ...` command.
 In Docker terminology, these versions are specified by "tags".
 
