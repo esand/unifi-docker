@@ -53,7 +53,8 @@ Each of the options is [described below.](#options-on-the-command-line)
 ```bash
 docker run -d --init \
    --restart=unless-stopped \
-   -p 8080:8080 -p 8443:8443 -p 3478:3478/udp \
+   -p 8080:8080 -p 8443:8443 -p 3478:3478/udp -p 10001:10001/udp \
+   -e SYSTEM_IP='<your docker host ip>' \
    -e TZ='Africa/Johannesburg' \
    -v ~/unifi:/unifi \
    --user unifi \
@@ -107,12 +108,14 @@ The options for the `docker run...` command are:
 - `--restart=unless-stopped` - If the container should stop for some reason,
 restart it unless you issue a `docker stop ...`
 - `-p ...` - Set the ports to pass through to the container.
-`-p 8080:8080 -p 8443:8443 -p 3478:3478/udp`
+`-p 8080:8080 -p 8443:8443 -p 3478:3478/udp -p 10001:10001/udp`
 is the minimal set for a working Unifi Controller. 
-- `-e TZ=...` Set an environment variable named `TZ` with the desired time zone.
+- `-e SYSTEM_IP=...` - Set ip address that devices will use to reach controller. See [Adopting
+Access Points and Unifi Devices](#adopting-access-points-and-unifi-devices) for details.
+- `-e TZ=...` - Set an environment variable named `TZ` with the desired time zone.
 Find your time zone in this 
 [list of timezones.](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
-- `-e ...` See the [Environment Variables](#environment-variables)
+- `-e ...` - See the [Environment Variables](#environment-variables)
 section for more environment variables.
 - `-v ...` - Bind the volume `~/unifi` on the Docker host
 to the directory `/unifi`inside the container.
@@ -145,11 +148,11 @@ _Note:_ In Docker, specifying an image with no tag
 (e.g., `jacobalberty/unifi`) gets the "latest" tag.
 For Unifi-in-Docker, this uses the most recent stable version.
 
-| Tag                                                                                       | Description                                     | Changelog                                                                                                                       |
-|-------------------------------------------------------------------------------------------|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| [`latest` `v9.0.114`](https://github.com/jacobalberty/unifi-docker/blob/master/Dockerfile) | Current Stable: Version 9.0.114 as of 2025-04-02  | [Change Log 9.0.114](https://community.ui.com/releases/UniFi-Network-Application-9-0-114/35b6e9ac-f63d-46c9-bbbe-74a4a61ac95f)     |
-| [`stable-6`](https://github.com/jacobalberty/unifi-docker/blob/stable-6/Dockerfile)       | Final stable version 6 (6.5.55)                 | [Change Log 6.5.55](https://community.ui.com/releases/UniFi-Network-Application-6-5-55/48c64137-4a4a-41f7-b7e4-3bee505ae16e)    |
-| [`stable-5`](https://github.com/jacobalberty/unifi-docker/blob/stable-5/Dockerfile)       | Final stable version 5 (5.4.23)                 | [Change Log 5.14.23](https://community.ui.com/releases/UniFi-Network-Controller-5-14-23/daf90732-30ad-48ee-81e7-1dcb374eba2a)   |
+| Tag                                                                                         | Description                                       | Changelog                                                                                                                        |
+|---------------------------------------------------------------------------------------------|---------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| [`latest` `v10.0.162`](https://github.com/jacobalberty/unifi-docker/blob/master/Dockerfile) | Current Stable: Version 10.0.162 as of 2025-12-04 | [Change Log 10.0.162](https://community.ui.com/releases/UniFi-Network-Application-10-0-162/2efd581a-3a55-4c36-80bf-1267dbfc2aee) |
+| [`stable-6`](https://github.com/jacobalberty/unifi-docker/blob/stable-6/Dockerfile)         | Final stable version 6 (6.5.55)                   | [Change Log 6.5.55](https://community.ui.com/releases/UniFi-Network-Application-6-5-55/48c64137-4a4a-41f7-b7e4-3bee505ae16e)     |
+| [`stable-5`](https://github.com/jacobalberty/unifi-docker/blob/stable-5/Dockerfile)         | Final stable version 5 (5.4.23)                   | [Change Log 5.14.23](https://community.ui.com/releases/UniFi-Network-Controller-5-14-23/daf90732-30ad-48ee-81e7-1dcb374eba2a)    |
 
 ### multiarch
 
@@ -160,22 +163,28 @@ support it as long as feasibly possible, for now that date seems to be expiratio
 
 ## Adopting Access Points and Unifi Devices
 
-#### Override "Inform Host" IP
-
-For your Unifi devices to "find" the Unifi Controller running in Docker,
-you _MUST_ override the Inform Host IP
-with the address of the Docker host computer.
+For your Unifi devices to "find" the Unifi Controller running in Docker, you _MUST_ override the
+Inform Host IP with the address of the Docker host computer.
 (By default, the Docker container usually gets the internal address 172.17.x.x
 while Unifi devices connect to the (external) address of the Docker host.)
-To do this:
 
-* Find **Settings -> System -> Other Configuration -> Override Inform Host:** in the Unifi Controller web GUI.
-(It's near the bottom of that page.)
+There are a few ways to do this:
+
+### By setting `SYSTEM_IP` environment variable
+Set `SYSTEM_IP` environment variable on the container to the IP devices may use
+to reach the controller, eg. your local address. This IP will be used as inform
+host during adopting process and used for following communication.
+
+### By overriding Inform Host on device level
+
+* Find **UniFi Devices -> Device Updates and Settings -> Device Settings -> Inform Host Override** in the UniFi Controller web GUI (it's in the middle of that page).
 * Check the "Enable" box, and enter the IP address of the Docker host machine. 
 * Save settings in Unifi Controller
 * Restart UniFi-in-Docker container with `docker stop ...` and `docker run ...` commands.
 
 _Hint: Port 10001 should be forwareded to make it work._
+
+### Other
 
 See [Side Projects](https://github.com/jacobalberty/unifi-docker/blob/master/Side-Projects.md#other-techniques-for-adoption) for
 other techniques to get Unifi devices to adopt your
@@ -215,6 +224,12 @@ You can pass in environment variables using the `-e` option when you invoke `doc
 See the `TZ` in the example above.
 Other environment variables:
 
+* `SYSTEM_IP`
+This is the IP address the controller will use for inform host during adoption.
+This should match IP address of the host, reachable from devices (eg. local, not
+docker address). If not set, internal docker IP will be used and devices will
+most likely to adopt.
+
 * `UNIFI_HTTP_PORT`
 This is the HTTP port used by the Web interface. Browsers will be redirected to the `UNIFI_HTTPS_PORT`.
 **Default: 8080**
@@ -233,6 +248,10 @@ Port used for HTTPS portal redirection.
 
 * `UNIFI_STDOUT`
 Controller outputs logs to stdout in addition to server.log
+**Default: unset**
+
+* `SMTP_STARTTLS_ENABLED`
+Disable StartTLS for SMTP. Required when the SMTP server do not support encryption
 **Default: unset** 
 
 * `TZ`
@@ -280,15 +299,15 @@ For larger installations a larger value is recommended. For memory constrained s
 
 The Unifi-in-Docker container exposes the following ports.
 A minimal Unifi Controller installation requires you
-expose the first three with the `-p ...` option.
+expose the first four with the `-p ...` option.
 
 * 8080/tcp - Device command/control 
 * 8443/tcp - Web interface + API 
 * 3478/udp - STUN service 
+* 10001/udp - Device discovery
 * 8843/tcp - HTTPS portal _(optional)_
 * 8880/tcp - HTTP portal _(optional)_
 * 6789/tcp - Speed Test (unifi5 only) _(optional)_
-* 10001/udp - Used for device discovery _(optional)_
 
 See [UniFi - Ports Used](https://help.ubnt.com/hc/en-us/articles/218506997-UniFi-Ports-Used) for more information.
 

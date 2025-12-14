@@ -134,6 +134,10 @@ if ! [[ -z "$DB_URI" || -z "$STATDB_URI" || -z "$DB_NAME" ]]; then
   settings["unifi.db.name"]="$DB_NAME"
 fi
 
+if ! [[ -z "$SYSTEM_IP"  ]]; then
+  settings["system_ip"]="$SYSTEM_IP"
+fi
+
 if ! [[ -z "$PORTAL_HTTP_PORT"  ]]; then
   settings["portal.http.port"]="$PORTAL_HTTP_PORT"
 fi
@@ -148,6 +152,10 @@ fi
 
 if ! [[ -z "$UNIFI_HTTPS_PORT"  ]]; then
   settings["unifi.https.port"]="$UNIFI_HTTPS_PORT"
+fi
+
+if ! [[ -z "$SMTP_STARTTLS_ENABLED"  ]]; then
+  settings["smtp.starttls_enabled"]="$SMTP_STARTTLS_ENABLED"
 fi
 
 if [[ "$UNIFI_ECC_CERT" == "true" ]]; then
