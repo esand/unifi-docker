@@ -1,3 +1,8 @@
+# THIS PROJECT IS ARCHIVED
+
+> [!IMPORTANT]
+> Due to the release of UniFi OS, this fork is no longer being maintained.
+
 # Unifi-in-Docker (unifi-docker)
 
 This repo contains a Dockerized version of [Ubiqiti Network's](https://www.ubnt.com/) Unifi Controller.
